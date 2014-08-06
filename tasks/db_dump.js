@@ -12,7 +12,8 @@
 'use strict';
 
 var shell = require('shelljs'),
-  path = require('path');
+  path = require('path'),
+  fs = require('fs');
 
 
 /**
@@ -36,10 +37,10 @@ module.exports = function(grunt) {
     var options = this.options({
       pass: "",
       port: 3306,
-      backup_to: "db/backups/<%= grunt.template.today('yyyy-mm-dd') %>_<%= target %>.sql"
+      backup_to: grunt.config.process("db/backups/<%= grunt.template.today('yyyy-mm-dd') %>_" + this.target + ".sql")
     });
 
-    var paths = generate_backup_paths(this.target, options);
+    var paths = generate_file_paths(options.backup_to);
 
     grunt.log.subhead("Dumping database '" + options.title + "' to '" + paths.file + "'");
     if (db_dump(options, paths)) {
@@ -55,10 +56,10 @@ module.exports = function(grunt) {
     var options = this.options({
       pass: "",
       port: 3306,
-      backup_to: "db/backups/<%= grunt.template.today('yyyy-mm-dd') %>_<%= target %>.sql"
+      import_from: grunt.config.process("db/backups/<%= grunt.template.today('yyyy-mm-dd') %>_" + this.target + ".sql")
     });
 
-    var paths = generate_backup_paths(this.target, options);
+    var paths = generate_file_paths(options.import_from);
 
     grunt.log.subhead("Importing database '" + options.title + "' from '" + paths.file + "'");
     if (db_import(options, paths)) {
@@ -70,13 +71,9 @@ module.exports = function(grunt) {
   });
 
 
-  function generate_backup_paths(target, options) {
+  function generate_file_paths(filePath) {
     var paths = {};
-    paths.file = grunt.template.process(options.backup_to, {
-      data: {
-        target: target
-      }
-    });
+    paths.file = filePath;
     paths.dir = path.dirname(paths.file);
     return paths;
   }
@@ -155,10 +152,14 @@ module.exports = function(grunt) {
         database: options.database,
         host: options.host,
         port: options.port,
-        dumpfile: options.backup_to
+        dumpfile: options.import_from
       }
     });
 
+    // check if dumpfile exists
+    if(!fs.existsSync(options.import_from)){
+      grunt.warn('Dump file "' + options.import_from + '" does not exist.');
+    }
 
 
     // 3) Test whether we should connect via SSH first

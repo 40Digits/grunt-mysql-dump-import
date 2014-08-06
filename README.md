@@ -109,6 +109,9 @@ You can also connect to a remote host using SSH by specifying a `ssh_host` optio
     "ssh_host": "db_ssh_host",
     
     "backup_to": "/db/backups/production.sql"
+
+    // Or, when used with db_import:
+    "import_from": "/db/backups/development.sql"
   }
 }
 ```
@@ -132,14 +135,14 @@ grunt.initConfig({
     // "Local" target
     "local": {
       "options": {
-          "title": "Local DB",
+        "title": "Local DB",
         
         "database": "<%= db_config.local.db_name %>",
         "user": "<%= db_config.local.username %>",
         "pass": "<%= db_config.local.password %>",
         "host": "<%= db_config.local.host %>",
         
-        "backup_to": "/db/backups/local.sql"
+        "import_from": "/db/backups/local.sql"
       }
   },
 
@@ -151,7 +154,7 @@ grunt.initConfig({
     // "Local" target
     "local": {
       "options": {
-          "title": "Local DB",
+        "title": "Local DB",
         
         "database": "<%= db_config.local.db_name %>",
         "user": "<%= db_config.local.username %>",
@@ -227,9 +230,9 @@ Description: the port the mysql server listens to
 Type: `String`  
 Description: ssh connection string in the format `SSH_USER@SSH_HOST`. The task assumes you have ssh keys setup which allow you to remote into your server without requiring the input of a password. As this is an exhaustive topic we will not cover it here but you might like to start by reading [Github's own advice](https://help.github.com/articles/generating-ssh-keys).
 
-#### backup_to
+#### backup_to & import_from
 Type: `String`
-Default: `"db/backups/<%= grunt.template.today('yyyy-mm-dd') %> - <%= grunt.task.current.target %>.sql"`
+Default: `"db/backups/<%= grunt.template.today('yyyy-mm-dd') %>_<%= grunt.task.current.target %>.sql"`
 Description: full destination file path of the generated dump. This option can include templates such as `<%= grunt.template.today('yyyy-mm-dd') %>` or `<%= grunt.task.current.target %>`.
 
 Within the dumptask, this is the location of the file that will be imported.
