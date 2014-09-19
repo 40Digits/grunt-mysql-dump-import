@@ -196,10 +196,11 @@ module.exports = function(grunt) {
       if (ret.code !== 0) {
         grunt.log.error(ret.output);
         return false;
-      } else {
-        return true;
       }
 
     }
+
+    //if we got here, it's all good
+    return true;
   }
 };
