@@ -22,6 +22,7 @@ var shell = require('shelljs'),
  * https://github.com/gruntjs/grunt/wiki/grunt.template
  */
 var commandTemplates = {
+  mysqlcreate: "echo 'create database if not exists <%= database %>' | mysql -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %>",
   mysqldump: "mysqldump -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %> <%= database %>",
   mysqlimport: "mysql -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %> <%= database %> < <%= dumpfile %>",
   ssh: "ssh <%= host %>"
@@ -124,7 +125,7 @@ module.exports = function(grunt) {
     });
 
     if (ret.code != 0) {
-      grunt.log.error(ret.output)
+      grunt.log.error(ret.output);
       return false;
     }
 
@@ -138,23 +139,23 @@ module.exports = function(grunt) {
    * Import a MYSQL dumpfile to a database
    */
   function db_import(options, paths) {
-    var cmd;
+    var cmds = [];
 
 
     // 2) Compile MYSQL cmd via Lo-Dash template string
     //
     // "Process" the password flag directly in the data hash to avoid a "-p" that would trigger a password prompt
     // in the shell
-    var tpl_mysqlimport = grunt.template.process(commandTemplates.mysqlimport, {
-      data: {
+    var tplData = {
         user: options.user,
         pass: options.pass != "" ? '-p' + options.pass : '',
         database: options.database,
         host: options.host,
         port: options.port,
         dumpfile: options.import_from
-      }
-    });
+      },
+      tpl_mysqlcreate = grunt.template.process(commandTemplates.mysqlcreate, { data: tplData }),
+      tpl_mysqlimport = grunt.template.process(commandTemplates.mysqlimport, { data: tplData });
 
     // check if dumpfile exists
     if(!fs.existsSync(options.import_from)){
@@ -165,7 +166,10 @@ module.exports = function(grunt) {
     // 3) Test whether we should connect via SSH first
     if (typeof options.ssh_host === "undefined") {
       // it's a local/direct connection            
-      cmd = tpl_mysqlimport;
+      cmds = [
+        tpl_mysqlcreate,
+        tpl_mysqlimport
+      ];
 
     } else {
       // it's a remote connection
@@ -175,19 +179,28 @@ module.exports = function(grunt) {
         }
       });
 
-      cmd = tpl_ssh + " \\ " + tpl_mysqlimport;
+      cmds = [
+        tpl_ssh + " \\ " + tpl_mysqlcreate,
+        tpl_ssh + " \\ " + tpl_mysqlimport
+      ];
     }
 
-    // Capture output...
-    var ret = shell.exec(cmd, {
-      silent: true
-    });
+    var cmdsLen = cmds.length;
+    for(var i = 0; i<cmdsLen; i++){
 
-    if (ret.code != 0) {
-      grunt.log.error(ret.output)
-      return false;
-    } else {
-      return true;
+      // Capture output...
+      var cmd = cmds[i],
+        ret = shell.exec(cmd, {
+          silent: true
+        });
+
+      if (ret.code !== 0) {
+        grunt.log.error(ret.output);
+        return false;
+      } else {
+        return true;
+      }
+
     }
   }
 };
