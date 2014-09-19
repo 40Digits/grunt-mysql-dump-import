@@ -180,7 +180,6 @@ module.exports = function(grunt) {
       });
 
       cmds = [
-        tpl_ssh + " \\ " + tpl_mysqlcreate,
         tpl_ssh + " \\ " + tpl_mysqlimport
       ];
     }
