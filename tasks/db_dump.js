@@ -22,7 +22,7 @@ var shell = require('shelljs'),
  * https://github.com/gruntjs/grunt/wiki/grunt.template
  */
 var commandTemplates = {
-  mysqlcreate: "echo 'create database if not exists <%= database %>' | mysql -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %>",
+  mysqlcreate: "echo 'CREATE DATABASE IF NOT EXISTS `<%= database %>`;' | mysql -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %>",
   mysqldump: "mysqldump -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %> <%= database %>",
   mysqlimport: "mysql -h <%= host %> -P <%= port %> -u<%= user %> <%= pass %> <%= database %> < <%= dumpfile %>",
   ssh: "ssh <%= host %>"
